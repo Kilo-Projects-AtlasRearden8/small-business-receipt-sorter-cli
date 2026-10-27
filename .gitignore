@@ -1,26 +1,28 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-env/
 
 # Editor / OS
-.DS_Store
-.idea/
-.vscode/
-
+# Python
 # Tool output (keep tracked examples out)
+# Virtual environments
+*.egg
+*.egg-info/
+*.py[cod]
+*.pyc
+.DS_Store
+.eggs/
+.env
+.env.*
+.idea/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.vscode/
+__pycache__/
+build/
+dist/
+dist/*.tmp
+env/
 expenses.csv
 expenses.json
-receipts_out/
+receipts_out/node_modules/
+venv/
