@@ -68,23 +68,38 @@ def _image_text(path: Path) -> str:
         return ""
 
 
+def _norm(token: str) -> float:
+    cleaned = token.replace("$", "").replace("€", "").replace("£", "")
+    cleaned = cleaned.replace(",", "")
+    try:
+        return float(cleaned)
+    except ValueError:
+        return 0.0
+
+
 def extract_amount(text: str) -> str:
-    """Pull the first currency-like amount out of OCR text, or ''."""
+    """Pull the amount out of OCR text, preferring the total, or ''.
+
+    Receipts often list several amounts (subtotal, tax, tip, total). We look
+    first for an amount on a line mentioning "total" or "balance due"; if none
+    is found we fall back to the largest amount on the page, which is usually
+    the total.
+    """
     if not text:
         return ""
-    matches = _AMOUNT_RE.findall(text)
-    if not matches:
+    amount_re = _AMOUNT_RE
+    total_line_re = re.compile(
+        r"(?mi)^\s*(total|balance due|amount due|grand total|total due)\b[^\d]{0,40}"
+        r"(?P<amount>" + amount_re.pattern + r")"
+    )
+    matches = list(total_line_re.finditer(text))
+    if matches:
+        token = matches[0].group("amount")
+        return f"{_norm(token):.2f}"
+    all_matches = amount_re.findall(text)
+    if not all_matches:
         return ""
-    # Prefer the largest-looking value (often the total) when several exist.
-    def _norm(token: str) -> float:
-        cleaned = token.replace("$", "").replace("€", "").replace("£", "")
-        cleaned = cleaned.replace(",", "")
-        try:
-            return float(cleaned)
-        except ValueError:
-            return 0.0
-
-    best = max(matches, key=_norm)
+    best = max(all_matches, key=_norm)
     return f"{_norm(best):.2f}"
 
 

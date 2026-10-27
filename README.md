@@ -1,29 +1,44 @@
 # receipt-sorter
 
-A small, local-first command-line tool that sorts a folder of receipt files
+A friendly, local-first command-line tool that sorts a folder of receipt files
 (PDF, JPG, PNG, and a few other image formats) into `year/month/category`
 folders and writes a CSV expense summary for bookkeeping.
 
-Everything runs on your machine. OCR is optional and only runs if
-[pytesseract](https://github.com/madmaze/pytesseract) and the
-`tesseract` binary are installed. No cloud, no API keys, no network calls.
+Everything runs on your own machine. OCR is optional and only runs if you
+install `pytesseract` and the `tesseract` binary. No cloud, no API keys, no
+network calls, and nothing ever leaves your computer.
 
 Built by **Asdale Dynamics, LLC** — beginner-friendly AI education, books,
 guides, and practical small-business tools.
 
+## What it does
+
+Point `receipt-sorter` at a folder of receipts and it will:
+
+1. **Read each filename** and guess the date, category, and amount.
+2. **Move each receipt** into a `year/month/category` folder, such as
+   `2024/07/Supplies/OfficeDepot_Receipt_2024-07-15.pdf`.
+3. **Write `expenses.csv`** — one row per receipt with date, amount, merchant,
+   and category, plus a `TOTAL` row at the bottom for bookkeeping.
+
+If a file doesn't match any rule, it's reported as `unclassified` and left
+exactly where it is — nothing is ever moved without a good reason.
+
 ## Features
 
-- **Filename-based classification** — rules match on regex or substring, so
+- **Filename-based classification** — rules match on regex or plain text, so
   `OfficeDepot_Receipt_2024-07-15.pdf` lands in `2024/07/Supplies/`.
-- **Optional local OCR** — with pytesseract + tesseract installed, image
-  receipts get their text extracted for date/amount/merchant guessing.
-- **Date resolution** — filename date first, then OCR text, then the file's
-  modification time as a fallback.
-- **CSV summary** — one row per receipt plus a `TOTAL` footer row for
-  bookkeeping.
-- **Dry-run mode** — preview every move without touching a file.
-- **Custom rules** — load classification rules from a YAML or JSON file.
-- **JSON summary** — `--json` also writes a machine-readable report.
+- **Optional local OCR** — with `pytesseract` + `tesseract` installed, image
+  receipts get their text read for date/amount/merchant guessing.
+- **Smart date resolution** — filename date first, then OCR text, then the
+  file's modification date as a fallback.
+- **CSV summary** — one row per receipt plus a `TOTAL` footer row.
+- **Dry-run mode** (`--dry-run`) — preview every move without touching a file
+  (no files moved, no CSV written).
+- **Custom rules** (`--rules`) — load your own classification rules from a
+  YAML or JSON file.
+- **Recursive scanning** (`--recursive`) — look inside subfolders too.
+- **JSON report** (`--json`) — a machine-readable summary next to the CSV.
 
 ## Installation
 
@@ -33,7 +48,7 @@ pip install -e .
 pip install -e ".[ocr,pdf,dev]"
 ```
 
-To enable OCR you also need the tesseract binary, e.g.:
+To enable OCR you also need the `tesseract` binary, e.g.:
 
 ```bash
 # Debian/Ubuntu
@@ -44,25 +59,32 @@ brew install tesseract
 
 ## Usage
 
-Dry run (no files moved):
+**Step 1: Preview first (recommended).** Dry-run shows what would happen
+without moving anything or writing any files:
 
 ```bash
 receipt-sorter ./receipts --dry-run
 ```
 
-Sort for real, writing `expenses.csv` next to the source folder:
+**Step 2: Sort for real.**
 
 ```bash
 receipt-sorter ./receipts --out ./expenses.csv
 ```
 
-With local OCR:
+**With OCR** (reads text from images):
 
 ```bash
 receipt-sorter ./receipts --ocr
 ```
 
-Custom rules file (`rules.yaml`):
+**Include subfolders:**
+
+```bash
+receipt-sorter ./receipts --recursive
+```
+
+**Use your own rules** (`rules.yaml`):
 
 ```yaml
 rules:
@@ -78,9 +100,7 @@ rules:
 receipt-sorter ./receipts --rules rules.yaml --ocr --json
 ```
 
-### Output
-
-Files are organized as:
+### What the output looks like
 
 ```
 receipts/
@@ -91,9 +111,10 @@ receipts/
 expenses.csv
 ```
 
-`expenses.csv` columns: `original_name, moved_name, year, month, category,
-date_iso, amount, merchant, source_text, notes, status, destination`, with a
-`TOTAL` row appended.
+`expenses.csv` columns:
+`original_name, moved_name, year, month, category, date_iso, amount,
+merchant, source_text, notes, status, destination` — plus a `TOTAL` row at
+the bottom.
 
 ## Default rules
 

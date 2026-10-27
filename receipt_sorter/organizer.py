@@ -103,14 +103,20 @@ def process_file(
     )
 
 
-def scan_folder(root: Path, rules, ocr: bool, dry_run: bool) -> SortResult:
-    """Process every supported file in `root` (non-recursive)."""
+def scan_folder(
+    root: Path, rules, ocr: bool, dry_run: bool, recursive: bool = False
+) -> SortResult:
+    """Process every supported file in `root` (recursive if requested)."""
     result = SortResult()
     if not root.exists():
         result.errors.append(f"Source folder does not exist: {root}")
         return result
+    if recursive:
+        iterator = root.rglob("*")
+    else:
+        iterator = root.iterdir()
     files = sorted(
-        p for p in root.iterdir()
+        p for p in iterator
         if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
     )
     for path in files:

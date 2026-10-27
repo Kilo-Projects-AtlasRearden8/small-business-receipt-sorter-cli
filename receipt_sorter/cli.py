@@ -46,6 +46,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Preview moves without changing any files.",
     )
     parser.add_argument(
+        "--recursive",
+        action="store_true",
+        help="Scan subfolders recursively for receipt files.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Also write a machine-readable JSON summary next to the CSV.",
@@ -75,15 +80,16 @@ def main(argv: list[str] | None = None) -> int:
     if not csv_path.is_absolute():
         csv_path = root / csv_path
 
-    result = scan_folder(root, rules, ocr=args.ocr, dry_run=args.dry_run)
+    result = scan_folder(
+        root, rules, ocr=args.ocr, dry_run=args.dry_run, recursive=args.recursive
+    )
     if not args.dry_run:
         write_csv(result, csv_path)
         print(f"wrote {csv_path}")
     else:
-        write_csv(result, csv_path)
-        print(f"would write {csv_path}")
+        print("(dry-run: no files moved, no CSV written)")
 
-    if args.json:
+    if args.json and not args.dry_run:
         import json
 
         json_path = csv_path.with_suffix(".json")
